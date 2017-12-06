@@ -1,3 +1,4 @@
+
 There is a competion which is posted on Kaggle named House Priced is very meaningful to me as it is the begining of my  game on Kaggle. 
 I've read some great notebooks that are really helpful to learn the basic procedure of data mining and these really gave me loads of insparation of handling dataset and modeling. So I decided few days ago to finally join in this competition and apply some skills that I learnt so far. The overall procedure is listed below and I hope it will be easy to follow.
 
@@ -111,9 +112,8 @@ Viewing whether there are some bizzarre relationship between numeric features an
 ```python
 # regplot: plot+linear regression
 def regplot(x,y,**kwargs):
-    try:
-        sns.regplot(x=x,y=y)
-
+    sns.regplot(x=x,y=y)
+        
 f = pd.melt(train_show, id_vars=['SalePrice'],value_vars=numeric_feats)
 g = sns.FacetGrid(f,col='variable',col_wrap=3,sharex=False,sharey=False,size=5)
 g = g.map(regplot,"value","SalePrice")
@@ -554,13 +554,7 @@ OneHotEncoder
 
 ```python
 category_feats = features.dtypes[features.dtypes == "object"].index
-
-for col in category_feats:
-    for_dummy = features.pop(col)
-    extra_data = pd.get_dummies(for_dummy,prefix=col)
-    #print(col,":",extra_data.shape)
-    features = pd.concat([features, extra_data],axis=1)
-    
+features = pd.get_dummies(features,columns=category_feats)   
 print(features.shape)
 ```
 
@@ -638,17 +632,12 @@ def param_select(model,param):
 ## base models
 
 ### Lasso 
-This model may be very sensitive to outliers. So we need to made it more robust on them. For that we use the sklearn's Robustscaler() method on pipeline
 
 
 ```python
 param = {"alpha": np.logspace(-5,0,100).round(5)}
 lasso,best_param = param_select(Lasso(),param)
 print(best_param)
-
-#keys,values = param_select(Lasso(),param)
-#print("{} = {:.5f}".format(keys[0], values[0]))
-#lasso = Lasso(alpha = values[0])
 ```
 
     {'alpha': 0.00046000000000000001}
@@ -802,7 +791,7 @@ df_0.loc[[a.find("_")==-1 for a in df_0["columns"]]]
 
 
 ```python
-Enet = ElasticNet(alpha=0.00052,l1_ratio=0.9,random_state=3)
+ENet = ElasticNet(alpha=0.00052,l1_ratio=0.9,random_state=3)
 ```
 
 ### Kernel Ridge
@@ -1018,7 +1007,6 @@ df_0.loc[[a.find("_")==-1 for a in df_0["columns"]]]
 ```python
 score = rmse_cv(lasso)
 print("\nLasso score: {:.4f} +/- {:.4f}\n".format(score.mean(), score.std()))
-# score: 0.1102 +/- 0.0063
 ```
 
     
@@ -1030,7 +1018,6 @@ print("\nLasso score: {:.4f} +/- {:.4f}\n".format(score.mean(), score.std()))
 ```python
 score = rmse_cv(ENet)
 print("ElasticNet score: {:.4f} +/- {:.4f}\n".format(score.mean(), score.std()))
-# score: 0.1102 +/- 0.0063
 ```
 
     ElasticNet score: 0.1102 +/- 0.0063
@@ -1041,7 +1028,6 @@ print("ElasticNet score: {:.4f} +/- {:.4f}\n".format(score.mean(), score.std()))
 ```python
 score = rmse_cv(KRR)
 print("Kernel Ridge score: {:.4f} +/- {:.4f}\n".format(score.mean(), score.std()))
-# score: 0.1113 +/- 0.0059
 ```
 
     Kernel Ridge score: 0.1113 +/- 0.0059
@@ -1052,7 +1038,6 @@ print("Kernel Ridge score: {:.4f} +/- {:.4f}\n".format(score.mean(), score.std()
 ```python
 score = rmse_cv(GBoost)
 print("Gradient Boosting score: {:.4f} +/- {:.4f}\n".format(score.mean(), score.std()))
-# score: 0.1164 +/- 0.0078
 ```
 
     Gradient Boosting score: 0.1164 +/- 0.0078
@@ -1063,7 +1048,6 @@ print("Gradient Boosting score: {:.4f} +/- {:.4f}\n".format(score.mean(), score.
 ```python
 score = rmse_cv(model_xgb)
 print("Xgboost score: {:.4f} +/- {:.4f}\n".format(score.mean(), score.std()))
-# score: 0.1174 +/- 0.0066
 ```
 
     Xgboost score: 0.1174 +/- 0.0066
@@ -1074,7 +1058,6 @@ print("Xgboost score: {:.4f} +/- {:.4f}\n".format(score.mean(), score.std()))
 ```python
 score = rmse_cv(model_lgb)
 print("LGBM score: {:.4f} +/- {:.4f}\n" .format(score.mean(), score.std()))
-# score: 0.1152 +/- 0.0059
 ```
 
     LGBM score: 0.1152 +/- 0.0059
@@ -1082,8 +1065,6 @@ print("LGBM score: {:.4f} +/- {:.4f}\n" .format(score.mean(), score.std()))
     
 
 ## Stacking models
-
-## simplest stacking method: Averaging base models
 
 ### Averaged base models class
 build a class to extend sklearn with our model
@@ -1111,7 +1092,40 @@ class AveragingModels(BaseEstimator, RegressorMixin, TransformerMixin):
     def predict(self,x_data):
         predictions = np.column_stack([
             model.predict(x_data) for model in self.models_])
-        return np.sum(self.weights*predictions, axis=1)# axis=1按行加权平均
+        return np.sum(self.weights*predictions, axis=1)
+```
+
+### Stucked base models class
+
+
+```python
+class StuckingModels(BaseEstimator, RegressorMixin, TransformerMixin):
+    def __init__(self,BaseModels,MetaModel):
+        self.BaseModels = BaseModels
+        self.MetaModel  = MetaModel
+        
+    def fit(self,x_data,y_data):
+        self.BaseModels_ = [list() for x in self.BaseModels]
+        self.MetaModel_  = clone(self.MetaModel)
+        kf = KFold(n_splits= 5, shuffle= True, random_state= 10)
+        meta_fold = np.zeros((x_data.shape[0],len(self.BaseModels)))
+        
+        for i,model in enumerate(self.BaseModels):
+            for train_index, test_index in kf.split(x_data,y_data):
+                instance = clone(model)
+                self.BaseModels_[i].append(instance)
+                instance.fit(x_data[train_index],y_data[train_index])
+                pred = instance.predict(x_data[test_index])
+                meta_fold[test_index, i] = pred
+                
+        self.MetaModel_.fit(meta_fold,y_data) 
+        return self
+    
+    def predict(self,x_data):
+        meta_features = np.column_stack([
+            np.column_stack([model.predict(x_data) for model in BaseModels]).mean(axis=1)
+            for BaseModels in self.BaseModels_])
+        return self.MetaModel_.predict(meta_features)
 ```
 
 ### Averaged base models score
@@ -1127,12 +1141,24 @@ print(" Averaged base models score:{:.4f} +/- {:.4f}".format(score.mean(),score.
      Averaged base models score:0.1080 +/- 0.0062
     
 
+### Stucked base models score
+
+
+```python
+StuckedModels =StuckingModels(BaseModels=(ENet,KRR,GBoost,model_xgb,model_lgb),MetaModel=lasso)
+score = rmse_cv(StuckedModels)
+print(" Stucked base models score:{:.4f} +/- {:.4f}".format(score.mean(),score.std()))
+```
+
+     Stucked base models score:0.1079 +/- 0.0064
+    
+
 # Prediction
 
 
 ```python
-AveragedModels.fit(train_features,train_labels)
-predict_log = AveragedModels.predict(test_features)
+StuckedModels.fit(train_features_scale,train_labels)
+predict_log = StuckedModels.predict(test_features_scale)
 pred = np.expm1(predict_log)
 ```
 
