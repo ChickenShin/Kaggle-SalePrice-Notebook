@@ -88,9 +88,9 @@ Viewing whether there are some categorical features linear to the label, like he
 
 
 ```python
-train_show = train
+train_show = train.copy()
 for c in categorical_feats:
-    train_show[c] = train[c].fillna("Mising")
+    train_show[c] = train_show[c].fillna("Missing")
         
 def boxplot(x,y,**kwargs):                                                       
     sns.boxplot(x=x,y=y)
@@ -113,7 +113,7 @@ Viewing whether there are some bizzarre relationship between numeric features an
 # regplot: plot+linear regression
 def regplot(x,y,**kwargs):
     sns.regplot(x=x,y=y)
-        
+
 f = pd.melt(train_show, id_vars=['SalePrice'],value_vars=numeric_feats)
 g = sns.FacetGrid(f,col='variable',col_wrap=3,sharex=False,sharey=False,size=5)
 g = g.map(regplot,"value","SalePrice")
@@ -127,10 +127,10 @@ Double check on some suspect features
 
 
 ```python
-nomial_feats=['MSSubClass','OverallQual','OverallCond','YearBuilt','YearRemodAdd','BsmtFullBath','FullBath','HalfBath',
-             'BedroomAbvGr','TotRmsAbvGrd','GarageYrBlt','GarageCars','MoSold','YrSold']
-for c in nomial_feats:
-    train_show[c] = train_show[c].fillna("Missing")
+#nomial_feats=['MSSubClass','OverallQual','OverallCond','YearBuilt','YearRemodAdd','BsmtFullBath','FullBath','HalfBath',
+#             'BedroomAbvGr','TotRmsAbvGrd','GarageYrBlt','GarageCars','MoSold','YrSold']
+#for c in nomial_feats:
+#    train_show[c] = train_show[c].fillna("Missing")
 
 def boxplot(x,y,**kwargs):
     sns.boxplot(x=x,y=y)
@@ -255,39 +255,40 @@ features.isnull().sum()[features.isnull().sum()>0].sort_values(ascending=False)
 
 
 
-    PoolQC          1456
-    MiscFeature     1408
-    Alley           1352
-    Fence           1169
-    FireplaceQu      730
+    PoolQC          2908
+    MiscFeature     2812
+    Alley           2719
+    Fence           2346
+    FireplaceQu     1420
     LotFrontage      486
-    GarageQual        78
-    GarageCond        78
-    GarageFinish      78
-    GarageYrBlt       78
-    GarageType        76
-    BsmtCond          45
-    BsmtQual          44
-    BsmtExposure      44
-    BsmtFinType1      42
-    BsmtFinType2      42
+    GarageQual       159
+    GarageCond       159
+    GarageFinish     159
+    GarageYrBlt      159
+    GarageType       157
+    BsmtExposure      82
+    BsmtCond          82
+    BsmtQual          81
+    BsmtFinType2      80
+    BsmtFinType1      79
+    MasVnrType        24
     MasVnrArea        23
-    MasVnrType        16
     MSZoning           4
     BsmtFullBath       2
     BsmtHalfBath       2
     Utilities          2
     Functional         2
+    Electrical         1
     BsmtUnfSF          1
     Exterior1st        1
     Exterior2nd        1
     TotalBsmtSF        1
+    GarageArea         1
     GarageCars         1
     BsmtFinSF2         1
     BsmtFinSF1         1
     KitchenQual        1
     SaleType           1
-    GarageArea         1
     dtype: int64
 
 
@@ -558,7 +559,7 @@ features = pd.get_dummies(features,columns=category_feats)
 print(features.shape)
 ```
 
-    (2917, 358)
+    (2917, 250)
     
 
 ## new train and test 
@@ -692,12 +693,12 @@ df_0.loc[[a.find("_")==-1 for a in df_0["columns"]]]
       <td>GarageQual</td>
     </tr>
     <tr>
-      <th>33</th>
+      <th>34</th>
       <td>-0.0</td>
       <td>LandSlope</td>
     </tr>
     <tr>
-      <th>38</th>
+      <th>39</th>
       <td>0.0</td>
       <td>MasVnrArea</td>
     </tr>
@@ -774,12 +775,12 @@ df_0.loc[[a.find("_")==-1 for a in df_0["columns"]]]
       <td>GarageQual</td>
     </tr>
     <tr>
-      <th>33</th>
+      <th>34</th>
       <td>-0.0</td>
       <td>LandSlope</td>
     </tr>
     <tr>
-      <th>38</th>
+      <th>39</th>
       <td>0.0</td>
       <td>MasVnrArea</td>
     </tr>
@@ -803,12 +804,12 @@ KRR,best_param = param_select(KernelRidge( kernel='polynomial'),param)
 print(best_param)
 ```
 
-    {'alpha': 0.15998999999999999, 'coef0': 1.8421052631578947, 'degree': 2.0}
+    {'alpha': 0.051790000000000003, 'coef0': -4.4736842105263159, 'degree': 1.0}
     
 
 
 ```python
-KRR = KernelRidge(alpha=0.16, kernel='polynomial', degree=2, coef0=1.8421)
+KRR = KernelRidge(alpha=0.05179, kernel='polynomial', degree=1, coef0=-4.47368)
 ```
 
 ### Gradient Boosting Regression
@@ -857,7 +858,7 @@ df_0.loc[[a.find("_")==-1 for a in df_0["columns"]]]
   </thead>
   <tbody>
     <tr>
-      <th>44</th>
+      <th>45</th>
       <td>0.0</td>
       <td>PoolArea</td>
     </tr>
@@ -919,17 +920,27 @@ df_0.loc[[a.find("_")==-1 for a in df_0["columns"]]]
       <td>3SsnPorch</td>
     </tr>
     <tr>
-      <th>10</th>
+      <th>8</th>
       <td>0.0</td>
-      <td>BsmtFinType2</td>
+      <td>BsmtFinSF2</td>
     </tr>
     <tr>
-      <th>37</th>
+      <th>12</th>
+      <td>0.0</td>
+      <td>BsmtHalfBath</td>
+    </tr>
+    <tr>
+      <th>34</th>
+      <td>0.0</td>
+      <td>LandSlope</td>
+    </tr>
+    <tr>
+      <th>38</th>
       <td>0.0</td>
       <td>LowQualFinSF</td>
     </tr>
     <tr>
-      <th>44</th>
+      <th>45</th>
       <td>0.0</td>
       <td>PoolArea</td>
     </tr>
@@ -986,12 +997,7 @@ df_0.loc[[a.find("_")==-1 for a in df_0["columns"]]]
   </thead>
   <tbody>
     <tr>
-      <th>37</th>
-      <td>0</td>
-      <td>LowQualFinSF</td>
-    </tr>
-    <tr>
-      <th>44</th>
+      <th>45</th>
       <td>0</td>
       <td>PoolArea</td>
     </tr>
@@ -1010,7 +1016,7 @@ print("\nLasso score: {:.4f} +/- {:.4f}\n".format(score.mean(), score.std()))
 ```
 
     
-    Lasso score: 0.1102 +/- 0.0063
+    Lasso score: 0.1101 +/- 0.0069
     
     
 
@@ -1020,7 +1026,7 @@ score = rmse_cv(ENet)
 print("ElasticNet score: {:.4f} +/- {:.4f}\n".format(score.mean(), score.std()))
 ```
 
-    ElasticNet score: 0.1102 +/- 0.0063
+    ElasticNet score: 0.1101 +/- 0.0069
     
     
 
@@ -1030,7 +1036,7 @@ score = rmse_cv(KRR)
 print("Kernel Ridge score: {:.4f} +/- {:.4f}\n".format(score.mean(), score.std()))
 ```
 
-    Kernel Ridge score: 0.1113 +/- 0.0059
+    Kernel Ridge score: 0.1124 +/- 0.0066
     
     
 
@@ -1040,7 +1046,7 @@ score = rmse_cv(GBoost)
 print("Gradient Boosting score: {:.4f} +/- {:.4f}\n".format(score.mean(), score.std()))
 ```
 
-    Gradient Boosting score: 0.1164 +/- 0.0078
+    Gradient Boosting score: 0.1178 +/- 0.0077
     
     
 
@@ -1050,7 +1056,7 @@ score = rmse_cv(model_xgb)
 print("Xgboost score: {:.4f} +/- {:.4f}\n".format(score.mean(), score.std()))
 ```
 
-    Xgboost score: 0.1174 +/- 0.0066
+    Xgboost score: 0.1157 +/- 0.0066
     
     
 
@@ -1060,7 +1066,7 @@ score = rmse_cv(model_lgb)
 print("LGBM score: {:.4f} +/- {:.4f}\n" .format(score.mean(), score.std()))
 ```
 
-    LGBM score: 0.1152 +/- 0.0059
+    LGBM score: 0.1159 +/- 0.0055
     
     
 
@@ -1132,13 +1138,12 @@ class StuckingModels(BaseEstimator, RegressorMixin, TransformerMixin):
 
 
 ```python
-AveragedModels = AveragingModels(models=(lasso,ENet,KRR,GBoost,model_xgb,model_lgb),weights=(0.3,0.1,0.15,0.15,0.15,0.15))
+AveragedModels = AveragingModels(models=(lasso,ENet,KRR,GBoost,model_xgb,model_lgb),weights=(0.4,0.1,0.15,0.05,0.15,0.15))
 score = rmse_cv(AveragedModels)
 print(" Averaged base models score:{:.4f} +/- {:.4f}".format(score.mean(),score.std()))
-# score:0.1080 +/- 0.0062 for weights=(0.3,0.1,0.15,0.15,0.15,0.15)
 ```
 
-     Averaged base models score:0.1080 +/- 0.0062
+     Averaged base models score:0.1084 +/- 0.0064
     
 
 ### Stucked base models score
@@ -1150,7 +1155,7 @@ score = rmse_cv(StuckedModels)
 print(" Stucked base models score:{:.4f} +/- {:.4f}".format(score.mean(),score.std()))
 ```
 
-     Stucked base models score:0.1079 +/- 0.0064
+     Stucked base models score:0.1079 +/- 0.0067
     
 
 # Prediction
